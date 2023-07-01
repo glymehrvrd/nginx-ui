@@ -2,17 +2,19 @@ package router
 
 import (
 	"encoding/base64"
-	"github.com/0xJacky/Nginx-UI/frontend"
-	"github.com/0xJacky/Nginx-UI/server/model"
-	"github.com/0xJacky/Nginx-UI/server/settings"
-	"github.com/gin-contrib/static"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/cast"
 	"io/fs"
 	"log"
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/0xJacky/Nginx-UI/frontend"
+	"github.com/0xJacky/Nginx-UI/server/model"
+	"github.com/0xJacky/Nginx-UI/server/pkg/helper"
+	"github.com/0xJacky/Nginx-UI/server/settings"
+	"github.com/gin-contrib/static"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/cast"
 )
 
 func recovery() gin.HandlerFunc {
@@ -40,6 +42,10 @@ func recovery() gin.HandlerFunc {
 
 func authRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if helper.SkipAuth(c) {
+			c.Next()
+			return
+		}
 		token := c.GetHeader("Authorization")
 		if token == "" {
 			tmp, _ := base64.StdEncoding.DecodeString(c.Query("token"))

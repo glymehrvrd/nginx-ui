@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import {useUserStore} from '@/pinia'
-import {LockOutlined, UserOutlined} from '@ant-design/icons-vue'
-import {reactive, ref, watch} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
+import { useUserStore } from '@/pinia'
+import { LockOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import gettext from '@/gettext'
-import {Form, message} from 'ant-design-vue'
+import { Form, message } from 'ant-design-vue'
 import auth from '@/api/auth'
 import install from '@/api/install'
 import SetLanguage from '@/components/SetLanguage/SetLanguage.vue'
@@ -14,13 +14,18 @@ const thisYear = new Date().getFullYear()
 const route = useRoute()
 const router = useRouter()
 
-install.get_lock().then(async (r: { lock: boolean }) => {
-    if (!r.lock) {
+install.get_lock().then(async (r: { skip_auth: boolean, lock: boolean }) => {
+    if (r.skip_auth) {
+        const { login } = useUserStore()
+        login('skip_auth')
+        const next = (route.query?.next || '').toString() || '/dashboard'
+        await router.push(next)
+    } else if (!r.lock) {
         await router.push('/install')
     }
 })
 
-const {$gettext} = gettext
+const { $gettext } = gettext
 const loading = ref(false)
 
 const modelRef = reactive({
@@ -43,7 +48,7 @@ const rulesRef = reactive({
     ]
 })
 
-const {validate, validateInfos, clearValidate} = Form.useForm(modelRef, rulesRef)
+const { validate, validateInfos, clearValidate } = Form.useForm(modelRef, rulesRef)
 
 const onSubmit = () => {
     validate().then(async () => {
@@ -80,22 +85,16 @@ watch(() => gettext.current, () => {
             </div>
             <a-form id="components-form-demo-normal-login">
                 <a-form-item v-bind="validateInfos.username">
-                    <a-input
-                        v-model:value="modelRef.username"
-                        :placeholder="$gettext('Username')"
-                    >
+                    <a-input v-model:value="modelRef.username" :placeholder="$gettext('Username')">
                         <template #prefix>
-                            <UserOutlined style="color: rgba(0, 0, 0, 0.25)"/>
+                            <UserOutlined style="color: rgba(0, 0, 0, 0.25)" />
                         </template>
                     </a-input>
                 </a-form-item>
                 <a-form-item v-bind="validateInfos.password">
-                    <a-input-password
-                        v-model:value="modelRef.password"
-                        :placeholder="$gettext('Password')"
-                    >
+                    <a-input-password v-model:value="modelRef.password" :placeholder="$gettext('Password')">
                         <template #prefix>
-                            <LockOutlined style="color: rgba(0, 0, 0, 0.25)"/>
+                            <LockOutlined style="color: rgba(0, 0, 0, 0.25)" />
                         </template>
                     </a-input-password>
                 </a-form-item>
@@ -108,7 +107,7 @@ watch(() => gettext.current, () => {
             <div class="footer">
                 <p>Copyright © 2020 - {{ thisYear }} Nginx UI</p>
                 Language
-                <set-language class="set_lang" style="display: inline"/>
+                <set-language class="set_lang" style="display: inline" />
             </div>
         </div>
     </div>
@@ -139,9 +138,7 @@ watch(() => gettext.current, () => {
             color: #a8a5a5 !important;
         }
 
-        .login-form-button {
-
-        }
+        .login-form-button {}
 
         .footer {
             padding: 30px;
@@ -149,5 +146,4 @@ watch(() => gettext.current, () => {
         }
     }
 }
-
 </style>
